@@ -1,12 +1,13 @@
 #include "Maze.h"
-#include "GUI/Color.h"
-#include "GUI/Rect.h"
-
+#include "Color.h"
+#include "Rect.h"
 
 #include <windows.h>  //for the sleep function
 
 #include <iostream>
 using namespace std;
+
+#define SLEEP_TIME 25
 
 Maze::Maze(Matrix* mz)
 {
@@ -49,28 +50,18 @@ Cell* Maze::processBackTrack(StackLinked<Cell>* stack)
 
    while (top_cell != NULL && top_cell->getDir() == DEAD_END)  //need to back track
    {
-
-
-      //remove the cell and set the maze location to BACKTRACK (the maze is a Matrix)
-
+		//remove the cell and set the maze location to BACKTRACK (the maze is a Matrix)
+		top_cell = stack->pop();
 		maze->setElement(top_cell->getRow(), top_cell->getCol(), BACKTRACK);
-		
-		top_cell->pop();
 		delete top_cell;
 		top_cell = NULL;
 		
-
-      //look at the next cell
-
-
-   Cell* top_cell = stack->peek();  
-
-
-
-      Sleep(75);      //slow down the maze traversal
-      gui->update();  //update whenever the color of a cell has been changed
+		//look at the next cell
+		top_cell = stack->peek();
+		
+		Sleep(SLEEP_TIME);      //slow down the maze traversal
+		gui->update();  //update whenever the color of a cell has been changed
    }
-
    return top_cell;
 }
 
@@ -78,11 +69,12 @@ bool Maze::isSolved(Cell* curr_cell, StackLinked<Cell>* stack)
 {
    //DO THIS
    //get row and col from curr_cell
-
    Cell* top_cell = stack->peek();
-   if (top_cell == NULL) {
+   if (top_cell == NULL)
+   {
 	   return false;
    }
+   
    int row = top_cell->getRow();
    int col = top_cell->getCol();
 
@@ -90,22 +82,21 @@ bool Maze::isSolved(Cell* curr_cell, StackLinked<Cell>* stack)
    if (row == maze->getNumRows() && col == maze->getNumCols())  
    {
 
+		
+		//set the maze location to TRIED
+		maze->setElement(row, col, TRIED);
 
-      //set the maze location to TRIED
-      maze->setElement(row, col, TRIED);
+		//push curr_cell
+		stack->push(top_cell);
 
-      //push curr_cell
-	  // look here
-
-
-      gui->update();
-      //return the appropriate boolean
-	  return true;
-
+		gui->update();
+		
+		//return the appropriate boolean
+		return true;
    }
 
-return false;
    //return the appropriate boolean
+   return false;
 }
 
 //backing through the maze, setting the solution color to PATH
@@ -115,16 +106,12 @@ void Maze::processSolution(StackLinked<Cell>* stack)
    //the stack has the solution path stored
    while(!stack->isEmpty())
    {
-      //get the next cell from the stack
-      Cell* cell = stack->pop();
-
+		//get the next cell from the stack
+		Cell* cell = stack->pop();
+		maze->setElement(cell->getRow(), cell->getCol(), PATH);
       
-      //update the maze location to PATH
-
-	  maze->setElement(cell->getRow(), cell->getCol(), PATH);
-
-
-      gui->update();
+		//update the maze location to PATH
+		gui->update();
    }
 }
 
@@ -151,10 +138,6 @@ bool Maze::traverse()
       //DO THIS
       Cell* curr_cell = top_cell->nextCell();
 
-
-
-
-
       //does this new Cell solve the maze?
       done = isSolved(curr_cell, &stack);
       if (done) break;
@@ -169,22 +152,23 @@ bool Maze::traverse()
       {
          //update the maze location to TRIED
          //put the cell on the stack (move forward through the maze)
-
-			maze->setElement(row, col, TRIED);
-            stack.push(curr_cell);
-
+		maze->setElement(row, col, TRIED);
+        stack.push(curr_cell);
 
 
 
-         Sleep(75);  //slow down the maze traversal
+
+
+
+         Sleep(SLEEP_TIME);  //slow down the maze traversal
          gui->update();
       }
       else //look for a different route 
       {
          //DO THIS
          //delete the cell
-         delete curr_cell;
-		 curr_cell = NULL;
+		delete curr_cell;
+		curr_cell = NULL;
 
       }
    }
@@ -205,7 +189,7 @@ bool Maze::traverse()
 void Maze::mouseClicked(int x, int y)
 {}
 
-void Maze::draw(Cairo::RefPtr<Cairo::Context> cr, int width, int height)
+void Maze::draw(wxDC& dc, int width, int height)
 {
    int rows = maze->getNumRows();
    int cols = maze->getNumCols();
@@ -237,23 +221,23 @@ void Maze::draw(Cairo::RefPtr<Cairo::Context> cr, int width, int height)
 
          if (val == WALL)
          {
-            blackRect.draw(cr, x_pixel, y_pixel);
+            blackRect.draw(dc, x_pixel, y_pixel);
          }
          else if (val == SPACE)
          {
-            whiteRect.draw(cr, x_pixel, y_pixel);
+            whiteRect.draw(dc, x_pixel, y_pixel);
          }
          else if (val == TRIED)
          {
-            blueRect.draw(cr, x_pixel, y_pixel);
+            blueRect.draw(dc, x_pixel, y_pixel);
          }
          else if (val == BACKTRACK)
          {
-            redRect.draw(cr, x_pixel, y_pixel);
+            redRect.draw(dc, x_pixel, y_pixel);
          }
          else if (val == PATH)
          {
-            greenRect.draw(cr, x_pixel, y_pixel);
+            greenRect.draw(dc, x_pixel, y_pixel);
          }
       }
    }
